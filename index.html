@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🌸 Mina's K-pop Journey</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#08000f;font-family:Georgia,serif;min-height:100vh;color:#fdf4ff;padding-bottom:2rem}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%}
+#app{position:relative;z-index:1}
+header{text-align:center;padding:1.2rem 1rem 0.75rem;border-bottom:1px solid #7c3aed44;background:#1a003322}
+header .sub{font-size:11px;color:#c084fc;letter-spacing:3px;text-transform:uppercase;font-family:sans-serif;margin-bottom:3px}
+header h1{font-size:23px;font-weight:700;color:#fdf4ff}
+header .controls{display:flex;justify-content:center;gap:8px;margin-top:8px;align-items:center}
+.sound-btn{background:none;border:1px solid #7c3aed44;border-radius:20px;color:#c084fc;font-size:11px;padding:3px 10px;cursor:pointer;font-family:sans-serif}
+#breadcrumb{display:flex;gap:4px;flex-wrap:wrap;padding:8px 1rem;min-height:0}
+.bc-item{font-size:10px;padding:2px 8px;border-radius:20px;font-family:sans-serif}
+#card-wrap{max-width:540px;margin:0 auto;padding:0 1rem}
+#card{background:linear-gradient(160deg,#110020,#1c003a);border-radius:20px;overflow:hidden;transition:opacity 0.42s,transform 0.42s}
+#card.hidden{opacity:0;transform:translateY(18px)}
+#card.visible{opacity:1;transform:translateY(0)}
+#top-bar{height:3px}
+#illustration{position:relative;border-bottom:1px solid #7c3aed22}
+#illustration svg{width:100%;height:160px;display:block}
+#ch-badge{position:absolute;top:10px;left:12px;font-size:10px;padding:3px 10px;border-radius:20px;background:#08000fcc;letter-spacing:1px;text-transform:uppercase;font-family:sans-serif}
+#inner{padding:1.1rem 1.2rem}
+#scene-art{text-align:center;margin-bottom:12px}
+#scene-art .art-emoji{font-size:36px;margin-bottom:4px;display:block}
+#scene-art h2{font-size:19px;font-weight:700;color:#fdf4ff;margin:0}
+#story-text{color:#e9d5ff;font-size:14px;line-height:1.9;margin-bottom:16px;padding:.9rem;background:#ffffff06;border-radius:12px;border:1px solid #7c3aed44}
+#story-text p+p{margin-top:.7rem}
+#choices{display:flex;flex-direction:column;gap:8px}
+.choice-btn{background:#ffffff08;color:#fdf4ff;border-radius:12px;padding:11px 14px;font-size:13.5px;font-family:Georgia,serif;cursor:pointer;text-align:left;line-height:1.5;transition:all 0.18s;width:100%}
+.choice-btn:hover{filter:brightness(1.2)}
+#ending{text-align:center}
+#ending .done-label{font-size:12px;color:#fbbf24;letter-spacing:2px;margin-bottom:12px;font-family:sans-serif}
+#ending .score-box{background:#fbbf2411;border:1px solid #fbbf2444;border-radius:12px;padding:.9rem;margin-bottom:12px}
+#ending .score-box .sl{font-size:11px;color:#c084fc;font-family:sans-serif;margin-bottom:3px}
+#ending .score-box .sn{font-size:30px;font-weight:700;color:#fbbf24}
+#restart-btn{background:linear-gradient(135deg,#ec4899,#7c3aed);color:#fff;border:none;border-radius:24px;padding:11px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif}
+#bottom-bar{height:2px}
+#start-over{text-align:center;margin-top:8px}
+#start-over button{background:none;border:none;color:#c084fc;font-size:11px;cursor:pointer;font-family:sans-serif;opacity:0.5}
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div id="app">
+  <header>
+    <div class="sub">A TWICE Fan Adventure</div>
+    <h1>🌸 Mina's K-pop Journey</h1>
+    <div class="controls">
+      <button class="sound-btn" id="snd-btn" onclick="toggleMute()">🔊 Sound on</button>
+      <span id="scene-count" style="font-size:11px;color:#c084fc;font-family:sans-serif;display:none"></span>
+    </div>
+  </header>
+  <div id="breadcrumb"></div>
+  <div id="card-wrap">
+    <div id="card" class="visible">
+      <div id="top-bar"></div>
+      <div id="illustration"><div id="ch-badge"></div></div>
+      <div id="inner">
+        <div id="scene-art"><span class="art-emoji" id="art"></span><h2 id="title"></h2></div>
+        <div id="story-text" id="story"></div>
+        <div id="choices"></div>
+        <div id="ending" style="display:none"></div>
+      </div>
+      <div id="bottom-bar"></div>
+    </div>
+    <div id="start-over" style="display:none"><button onclick="restart()">↩ Start over</button></div>
+  </div>
+</div>
+
+<script>
+const C={bg:"#08000f",pink:"#f472b6",pink2:"#ec4899",purple:"#a855f7",purple2:"#7c3aed",gold:"#fbbf24",teal:"#2dd4bf",green:"#4ade80",red:"#f87171",white:"#fdf4ff",muted:"#c084fc"};
+
+// ── starfield ──────────────────────────────────────────────
+const starsEl=document.getElementById("stars");
+for(let i=0;i<90;i++){const d=document.createElement("div");d.className="star";const sz=i%5===0?2:1;d.style.cssText=`width:${sz}px;height:${sz}px;background:${[C.pink,C.purple,C.teal,C.gold,"#fff"][i%5]};top:${Math.random()*100}%;left:${Math.random()*100}%;opacity:${.1+Math.random()*.45}`;starsEl.appendChild(d);}
+
+// ── audio ──────────────────────────────────────────────────
+let audioCtx=null,muted=false;
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function note(f,d,type="sine",v=0.12,delay=0){
+  try{const c=getCtx(),o=c.createOscillator(),a=c.createGain();o.connect(a);a.connect(c.destination);o.type=type;o.frequency.setValueAtTime(f,c.currentTime+delay);a.gain.setValueAtTime(0,c.currentTime+delay);a.gain.linearRampToValueAtTime(v,c.currentTime+delay+.02);a.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+d);o.start(c.currentTime+delay);o.stop(c.currentTime+delay+d+.05);}catch(e){}}
+const SFX={
+  click:()=>{note(880,.07,"sine",.1);note(1100,.05,"sine",.07,.05);},
+  hover:()=>note(660,.04,"sine",.06),
+  advance:()=>[523,659,784,1047].forEach((f,i)=>note(f,.18,"triangle",.11,i*.07)),
+  fanfare:()=>{[523,659,784,1047,1319].forEach((f,i)=>note(f,.22,"triangle",.12,i*.09));note(1568,.5,"sine",.1,.55);},
+  tension:()=>[200,212,224].forEach((f,i)=>note(f,.45,"sawtooth",.05,i*.13)),
+  victory:()=>{[523,659,784,659,784,1047].forEach((f,i)=>note(f,.18,"triangle",.13,i*.11));note(1319,.6,"sine",.11,.77);},
+  ambient:()=>[261,329,392,523].forEach((f,i)=>{note(f,1.8,"sine",.04,i*.18);note(f*2,1.2,"sine",.02,i*.18+.1);}),
+  dramatic:()=>{[220,277,330].forEach((f,i)=>note(f,.5,"sawtooth",.05,i*.05));note(440,.3,"sine",.09,.3);}
+};
+function play(name){if(!muted&&SFX[name])SFX[name]();}
+function chapterSound(ch){
+  const m={Prologue:"ambient","Chapter 1":"advance","Chapter 2":"tension","Chapter 3":"dramatic","Chapter 4":"fanfare","Chapter 5":"advance","Chapter 6":"tension",Epilogue:"victory"};
+  if(m[ch])play(m[ch]);
+}
+function toggleMute(){muted=!muted;document.getElementById("snd-btn").textContent=muted?"🔇 Sound off":"🔊 Sound on";}
+
+// ── chapter colours ────────────────────────────────────────
+const CC={Prologue:C.purple,"Chapter 1":C.pink,"Chapter 2":C.red,"Chapter 3":C.gold,"Chapter 4":C.teal,"Chapter 5":C.green,"Chapter 6":C.pink2,Epilogue:C.gold};
+const MOOD={brave:C.pink,bold:C.pink2,cautious:C.muted,grateful:C.teal,thrilled:C.gold,determined:C.purple,wise:C.teal,stubborn:C.red,sneaky:C.purple2,team:C.green,relieved:C.green,legendary:C.gold,triumphant:C.gold,tough:C.red,slick:C.teal,flying:C.pink,victorious:C.gold,savvy:C.teal,proud:C.purple,regal:C.purple,"chaotic good":C.pink2,iconic:C.gold,dignified:C.purple,blessed:C.pink,clever:C.teal,risky:C.red};
+
+// ── SVG illustrations ──────────────────────────────────────
+function svgStart(){return`<svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="sg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#3b006688"/><stop offset="100%" stop-color="#08000f"/></radialGradient></defs><rect width="340" height="160" fill="url(#sg)"/>${[20,60,100,150,200,250,300,330,40,180,310,90,270,130].map((x,i)=>`<circle cx="${x}" cy="${10+((i*37)%120)}" r="${1+i%2}" fill="${[C.pink,C.purple,C.gold,"#fff"][i%4]}" opacity="${.6+i%3*.1}"/>`).join("")}<rect y="140" width="340" height="20" fill="#0d0020"/>${[[20,110,30,50],[60,130,20,30],[90,120,25,40],[130,125,15,35],[160,90,40,70],[210,115,25,45],[240,120,20,40],[270,110,35,50],[305,125,20,35]].map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#1a003a" rx="2"/>`).join("")}<ellipse cx="170" cy="100" rx="12" ry="16" fill="#f9a8d4"/><circle cx="170" cy="80" r="10" fill="#fde68a"/><ellipse cx="170" cy="76" rx="10" ry="8" fill="#1a1a1a"/><rect x="185" y="95" width="28" height="18" rx="3" fill="${C.gold}" opacity="0.9"/><text x="199" y="107" text-anchor="middle" font-size="6" fill="#000" font-weight="bold">JYP</text>${[[145,55],[200,45],[220,70],[150,70]].map(([x,y])=>`<text x="${x}" y="${y}" font-size="10" text-anchor="middle" fill="${C.pink}" opacity="0.8">✦</text>`).join("")}<text x="170" y="155" text-anchor="middle" font-size="9" fill="${C.muted}" font-family="Georgia,serif">Nagoya, 2015</text></svg>`;}
+
+function svgTraining(){return`<svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg"><rect width="340" height="160" fill="#0d0015"/><rect y="130" width="340" height="30" fill="#1a0028"/><rect width="340" height="130" fill="#13001f"/>${[80,160,240].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="130" stroke="#ffffff08" stroke-width="1"/>`).join("")}<rect x="10" y="85" width="320" height="4" rx="2" fill="#4a2060"/><circle cx="170" cy="65" r="10" fill="#fde68a"/><ellipse cx="170" cy="78" rx="9" ry="3" fill="#1a1a1a"/><line x1="170" y1="75" x2="170" y2="108" stroke="#f9a8d4" stroke-width="3"/><line x1="170" y1="85" x2="148" y2="72" stroke="#f9a8d4" stroke-width="2.5"/><line x1="170" y1="85" x2="192" y2="78" stroke="#f9a8d4" stroke-width="2.5"/><line x1="170" y1="108" x2="158" y2="128" stroke="#f9a8d4" stroke-width="2.5"/><line x1="170" y1="108" x2="190" y2="122" stroke="#f9a8d4" stroke-width="2.5"/>${[[50,40],[280,35],[100,25],[250,50]].map(([x,y])=>`<text x="${x}" y="${y}" font-size="14" fill="${C.purple}" opacity="0.5">♪</text>`).join("")}<text x="170" y="155" text-anchor="middle" font-size="9" fill="${C.muted}" font-family="Georgia,serif">JYP Training Rooms, Seoul</text></svg>`;}
+
+function svgDebut(){return`<svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="sp" cx="50%" cy="0%" r="80%"><stop offset="0%" stop-color="#ffffff22"/><stop offset="100%" stop-color="#08000f00"/></radialGradient></defs><rect width="340" height="160" fill="#08000f"/><rect width="340" height="160" fill="url(#sp)"/><rect y="120" width="340" height="40" fill="#1a0028"/><rect y="118" width="340" height="4" fill="#a855f722"/>${Array.from({length:60}).map((_,i)=>`<circle cx="${10+(i%20)*16}" cy="${85+(Math.floor(i/20)*12)}" r="3" fill="${[C.pink,C.purple,C.teal,C.gold,"#fff"][i%5]}" opacity="0.5"/>`).join("")}${[-80,-60,-40,-20,0,20,40,60,80].map((off,i)=>`<g transform="translate(${170+off},120)"><circle cy="-32" r="${i===5?7:5}" fill="${i===5?"#fde68a":"#f9a8d4"}" opacity="${i===5?1:.5}"/><rect x="-5" y="-26" width="10" height="20" rx="3" fill="${i===5?C.pink:C.purple}" opacity="${i===5?1:.4}"/></g>`).join("")}${[120,170,220].map(x=>`<polygon points="${x},0 ${x-30},120 ${x+30},120" fill="#ffffff06"/>`).join("")}${[[30,20],[80,35],[140,15],[200,28],[260,18],[310,40],[50,50],[290,30]].map(([x,y],i)=>`<rect x="${x}" y="${y}" width="6" height="3" rx="1" fill="${[C.pink,C.gold,C.teal,C.purple][i%4]}" opacity="0.7" transform="rotate(${i*35} ${x} ${y})"/>`).join("")}<text x="170" y="155" text-anchor="middle" font-size="9" fill="${C.gold}" font-family="Georgia,serif">✨ TWICE Debut Stage ✨</text></svg>`;}
+
+function svgTour(){return`<svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg"><rect width="340" height="160" fill="#040a1a"/><circle cx="170" cy="80" r="65" fill="#0a1628" stroke="${C.teal}" stroke-width="1" opacity="0.8"/>${[-40,-20,0,20,40].map((off,i)=>`<ellipse cx="170" cy="80" rx="${Math.abs(off)||2}" ry="65" fill="none" stroke="${C.teal}" stroke-width="0.5" opacity="0.3"/>`).join("")}${[-30,-10,10,30].map(off=>`<line x1="105" y1="${80+off}" x2="235" y2="${80+off}" stroke="${C.teal}" stroke-width="0.5" opacity="0.3"/>`).join("")}${[[140,60,"London"],[210,55,"Seoul"],[200,75,"Tokyo"],[130,90,"NYC"],[165,100,"Sydney"]].map(([x,y,l])=>`<circle cx="${x}" cy="${y}" r="4" fill="${C.pink}" opacity="0.9"/><circle cx="${x}" cy="${y}" r="8" fill="${C.pink}" opacity="0.2"/><text x="${x}" y="${y-8}" text-anchor="middle" font-size="7" fill="${C.white}" opacity="0.7">${l}</text>`).join("")}<text x="155" y="72" font-size="14" fill="${C.gold}" opacity="0.9">✈</text><text x="170" y="155" text-anchor="middle" font-size="9" fill="${C.muted}" font-family="Georgia,serif">TWICELIGHTS World Tour</text></svg>`;}
+
+function svgTokyo(){return`<svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg"><rect width="340" height="160" fill="#050010"/><rect width="340" height="100" fill="#0a0020"/><polygon points="170,10 185,100 155,100" fill="#cc0000" opacity="0.8"/><polygon points="170,10 178,55 162,55" fill="#ff3300" opacity="0.6"/><rect x="152" y="98" width="36" height="8" fill="#990000"/>${[20,40,60,80].map(y=>`<circle cx="170" cy="${y}" r="2" fill="${C.gold}" opacity="0.8"/>`).join("")}${[[10,70,40,90],[60,80,30,80],[100,85,25,75],[220,85,25,75],[260,80,30,80],[295,70,40,90]].map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#1a0030" rx="2"/>`).join("")}<rect y="148" width="340" height="12" fill="#0d0020"/><circle cx="170" cy="120" r="8" fill="#fde68a"/><ellipse cx="170" cy="132" rx="7" ry="12" fill="${C.pink}" opacity="0.8"/><line x1="183" y1="118" x2="198" y2="133" stroke="${C.red}" stroke-width="2"/><text x="170" y="155" text-anchor="middle" font-size="9" fill="${C.muted}" font-family="Georgia,serif">Tokyo Dome — the biggest night</text></svg>`;}
+
+function svgFinale(){return`<svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="fg" cx="50%" cy="40%" r="70%"><stop offset="0%" stop-color="#5c007888"/><stop offset="100%" stop-color="#08000f"/></radialGradient></defs><rect width="340" height="160" fill="url(#fg)"/>${Array.from({length:30}).map((_,i)=>`<rect x="${i*11+5}" y="${(i*47)%140}" width="5" height="3" rx="1" fill="${[C.pink,C.gold,C.teal,C.purple,C.green][i%5]}" opacity="0.7" transform="rotate(${i*22} ${i*11+5} ${(i*47)%140})"/>`).join("")}${[-88,-66,-44,-22,0,22,44,66,88].map((off,i)=>`<g transform="translate(${170+off},115)"><circle cy="-28" r="${i===5?7:5}" fill="${i===5?"#fde68a":"#f9a8d4"}" opacity="${i===5?1:.7}"/><rect x="-4" y="-22" width="8" height="18" rx="2" fill="${[C.pink,C.purple,C.teal,C.gold,C.pink2,C.pink,C.purple,C.teal,C.gold][i]}" opacity="${i===5?1:.7}"/><line x1="-4" y1="-15" x2="-12" y2="-30" stroke="#f9a8d4" stroke-width="2" opacity="${i===5?1:.7}"/><line x1="4" y1="-15" x2="12" y2="-30" stroke="#f9a8d4" stroke-width="2" opacity="${i===5?1:.7}"/></g>`).join("")}<rect y="125" width="340" height="35" fill="#1a0028"/><rect y="123" width="340" height="3" fill="${C.gold}" opacity="0.4"/><text x="170" y="45" text-anchor="middle" font-size="32" fill="${C.gold}" opacity="0.9">★</text>${[80,170,260].map(x=>`<polygon points="${x},0 ${x-25},125 ${x+25},125" fill="#ffffff04"/>`).join("")}<text x="170" y="155" text-anchor="middle" font-size="9" fill="${C.gold}" font-family="Georgia,serif">10th Anniversary — You Are TWICE 🌸</text></svg>`;}
+
+function svgDefault(c){return`<svg viewBox="0 0 340 160" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="dg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="${c}44"/><stop offset="100%" stop-color="#08000f"/></radialGradient></defs><rect width="340" height="160" fill="url(#dg)"/>${[50,100,150,200,250,300,30,80,180,280].map((x,i)=>`<circle cx="${x}" cy="${20+((i*41)%120)}" r="${1+i%3}" fill="${c}" opacity="${.3+i%4*.1}"/>`).join("")}<circle cx="170" cy="75" r="12" fill="#fde68a" opacity="0.9"/><line x1="170" y1="87" x2="170" y2="118" stroke="${C.pink}" stroke-width="3"/><line x1="170" y1="97" x2="150" y2="83" stroke="${C.pink}" stroke-width="2.5"/><line x1="170" y1="97" x2="196" y2="88" stroke="${C.pink}" stroke-width="2.5"/><line x1="170" y1="118" x2="158" y2="138" stroke="${C.pink}" stroke-width="2.5"/><line x1="170" y1="118" x2="188" y2="132" stroke="${C.pink}" stroke-width="2.5"/><text x="170" y="155" text-anchor="middle" font-size="9" fill="${c}" opacity="0.7" font-family="Georgia,serif">✦ TWICE ✦</text></svg>`;}
+
+function getIllustration(id,c){
+  const training=["training_start","jihyo_friend","jihyo_clash","midnight_practice","audition_ballet","audition_kpop","seoul_arrive","debut_prep","ankle_rest","ankle_push","ankle_smart"];
+  const tour=["world_tour","pr_smart","pr_ignore","pr_confront"];
+  const tokyo=["tokyo_crisis","silent_star","pulled_show","mime_caught"];
+  if(["start","parents"].includes(id))return svgStart();
+  if(training.includes(id))return svgTraining();
+  if(id==="debut_night")return svgDebut();
+  if(tour.includes(id))return svgTour();
+  if(tokyo.includes(id))return svgTokyo();
+  if(id==="finale")return svgFinale();
+  return svgDefault(c);
+}
+
+// ── scenes ─────────────────────────────────────────────────
+const SCENES={
+  start:{chapter:"Prologue",title:"A Dream Begins",art:"🌸",text:"It's 2015. You are Myoui Mina — a 15-year-old Japanese girl with a passion for ballet and a secret dream you've never told anyone. One afternoon, a JYP Entertainment scout spots you at a shopping mall in Nagoya. Your heart hammers as she hands you a card.\n\n\"You have something special,\" she says. \"Would you like to audition in Seoul?\"",choices:[{text:"✈️ Pack your bags — Seoul, here I come!",next:"seoul_arrive",mood:"brave"},{text:"😰 Ask your parents first — this is huge",next:"parents",mood:"cautious"}]},
+  parents:{chapter:"Prologue",title:"Family First",art:"🏠",text:"Your parents sit quietly as you explain. Your mother looks worried. Your father studies the scout's card carefully.\n\n\"Ballet we understand,\" your mother says softly. \"But K-pop? Korea? You'd be so far away...\"\n\nYour father surprises you. \"She has the discipline,\" he says. \"Let her try.\"\n\nYour mother finally nods — one tear, one smile.",choices:[{text:"🙏 Thank them and book the flight",next:"seoul_arrive",mood:"grateful"}]},
+  seoul_arrive:{chapter:"Chapter 1",title:"The City of Dreams",art:"🏙️",text:"Seoul is enormous and overwhelming. The JYP building gleams like a fortress. Inside, 200 other hopeful trainees eye you up. Most have been training for years. You've never done a single K-pop class.\n\nThe audition panel calls your name. Your legs go to jelly.",choices:[{text:"💃 Perform a ballet routine — play to your strengths",next:"audition_ballet",mood:"bold"},{text:"🎤 Attempt a K-pop song you learned on the flight",next:"audition_kpop",mood:"brave"}]},
+  audition_ballet:{chapter:"Chapter 1",title:"Swan in Seoul",art:"🩰",text:"The room goes quiet as you begin. No K-pop moves — just pure classical ballet. Graceful, precise, heartbreakingly beautiful. You can see the judges whispering.\n\nJYP himself walks in halfway through. He watches you finish in silence.\n\n\"She moves like water,\" he says. \"Sign her.\"",choices:[{text:"🎉 Sign the contract — training begins!",next:"training_start",mood:"thrilled"}]},
+  audition_kpop:{chapter:"Chapter 1",title:"Brave but Wobbly",art:"😬",text:"Your K-pop attempt is... enthusiastic. The judges wince once or twice. But they see something — your stage presence, your ballet posture, your raw magnetism.\n\n\"Technique needs work,\" one judge says. \"But she has an aura. Let's see what training does.\"\n\nYou squeak through on potential alone.",choices:[{text:"💪 Accept the place and vow to work harder than anyone",next:"training_start",mood:"determined"}]},
+  training_start:{chapter:"Chapter 2",title:"Trainee Life",art:"🏋️",text:"Training is brutal. 6am starts. Vocal lessons, dance drills, Korean language classes, media training. You share a tiny dorm room with four other trainees.\n\nYour biggest rival is Jihyo — a girl who has trained for SEVEN years and has a voice like thunder. She seems to resent your fast rise.\n\nThen one morning she blocks the practice room door. \"This spot is mine,\" she says coldly.",choices:[{text:"🤝 Try to make friends — a rival now could be an ally later",next:"jihyo_friend",mood:"wise"},{text:"😤 Push past her and practise anyway",next:"jihyo_clash",mood:"stubborn"},{text:"😴 Sneak in at midnight when she's asleep",next:"midnight_practice",mood:"sneaky"}]},
+  jihyo_friend:{chapter:"Chapter 2",title:"Unlikely Allies",art:"🤝",text:"You offer Jihyo your last bottle of banana milk — a Korean peace offering. She stares at it for a long moment.\n\n\"Seven years,\" she mutters. \"And you just... waltz in.\"\n\n\"I know,\" you say. \"I'm sorry. Teach me?\"\n\nSomething cracks in her expression. She steps aside. \"Fine. But you'd better not waste my time.\"",choices:[{text:"📚 Train together every evening",next:"debut_prep",mood:"team"}]},
+  jihyo_clash:{chapter:"Chapter 2",title:"Head to Head",art:"⚡",text:"You push past. Jihyo is furious. The next week is a cold war — dirty looks, blocked mirrors, someone mysteriously hides your dance shoes before a key evaluation.\n\nYou perform barefoot. The trainers are horrified... then impressed by your nerve.\n\nJihyo watches in silence. That evening she leaves a new pair of shoes outside your dorm door. No note.",choices:[{text:"👟 Accept the peace offering and move forward",next:"debut_prep",mood:"relieved"}]},
+  midnight_practice:{chapter:"Chapter 2",title:"The Midnight Grind",art:"🌙",text:"You practice alone at midnight for three weeks. You're exhausted but unstoppable. The trainers notice your sudden leaps in skill and are baffled.\n\nThen one night the lights flick on. It's JYP himself, working late.\n\nHe watches you dance for ten minutes without speaking. \"Don't let me stop you,\" he says, and leaves.\n\nYou made an impression.",choices:[{text:"⭐ Keep the momentum going into debut prep",next:"debut_prep",mood:"legendary"}]},
+  debut_prep:{chapter:"Chapter 3",title:"The Group Forms",art:"✨",text:"After months of brutal evaluation, the final lineup is announced. TWICE — nine girls, chosen from thousands. Your name is on the list.\n\nDebut is one month away. The song is \"Like OOH-AHH.\" Rehearsals are relentless.\n\nThree days before debut, disaster strikes — you twist your ankle in rehearsal. The physio says rest. The choreographer says you can't miss the stage.",choices:[{text:"🩹 Rest and trust the others to cover",next:"ankle_rest",mood:"wise"},{text:"😤 Dance through the pain — this is your moment",next:"ankle_push",mood:"stubborn"},{text:"🎭 Modify your moves subtly so no one notices",next:"ankle_smart",mood:"clever"}]},
+  ankle_rest:{chapter:"Chapter 3",title:"Trust the Team",art:"🩹",text:"You rest. It's agonising to watch rehearsals from the sideline. Nayeon covers your centre position gracefully.\n\nOn debut day, you strap up the ankle and take the stage. The pain is a 7 out of 10. Your face shows nothing but joy.\n\nThe audience doesn't see the ankle. They see Mina — elegant, magnetic, unforgettable.",choices:[{text:"🌟 TWICE debuts — the journey continues!",next:"debut_night",mood:"triumphant"}]},
+  ankle_push:{chapter:"Chapter 3",title:"Dancing on Broken Glass",art:"😰",text:"You perform. Every step is agony. You smile through gritted teeth.\n\nHalfway through, you stumble — just slightly. The camera catches it. Twitter notices. But then you recover, and nail the final formation so perfectly that fans replay it on loop.\n\n\"She's hurt,\" one fan tweets. \"And she STILL did that? Absolute queen.\"",choices:[{text:"💪 The pain was worth it — onwards!",next:"debut_night",mood:"tough"}]},
+  ankle_smart:{chapter:"Chapter 3",title:"The Elegant Workaround",art:"🎭",text:"You quietly rework three of your sections — larger arm movements, reduced footwork, still completely in style. Only Jihyo notices, and she covers the gap without a word.\n\nThe performance is flawless. The choreographer watches the playback, puzzled. \"That section looked even better than rehearsal,\" he mutters.\n\nJihyo winks at you backstage.",choices:[{text:"😄 Stage genius! On to the debut night!",next:"debut_night",mood:"slick"}]},
+  debut_night:{chapter:"Chapter 4",title:"Like OOH-AHH",art:"🎤",text:"October 20, 2015. The stage lights hit you like a wall. 3,000 ONCE fans scream. The music drops.\n\nYou dance. You've never felt more alive.\n\nThe encore is chaotic — confetti, tears, fans chanting each member's name. When they chant yours — \"MI-NA! MI-NA!\" — something inside you breaks open.\n\nThis is real. You are TWICE.",choices:[{text:"🚀 Fast forward — the first world tour awaits",next:"world_tour",mood:"flying"}]},
+  world_tour:{chapter:"Chapter 5",title:"TWICELIGHTS World Tour",art:"🌍",text:"Three years of hits later, TWICE embarks on their first world tour. 30 cities. Sold-out arenas. You're in London, and 15,000 fans are outside the venue.\n\nThen your manager pulls you aside backstage. \"There's a journalist,\" she whispers. \"They have a story — allegedly you feuded with a member. It's not true, but they're running it tomorrow.\"\n\nYou have one hour before showtime.",choices:[{text:"📱 Post a selfie with the member right now — kill the story",next:"pr_smart",mood:"savvy"},{text:"🚫 Ignore it — let the music speak",next:"pr_ignore",mood:"proud"},{text:"😤 Confront the journalist directly",next:"pr_confront",mood:"bold"}]},
+  pr_smart:{chapter:"Chapter 5",title:"The Power of a Selfie",art:"📱",text:"You and the member post a laughing selfie: \"London with my girl 💕 TWICELIGHTS here we come!\"\n\nIt gets 2 million likes in 40 minutes. The journalist's story dies before it's even published. ONCE celebrate. The tabloid deletes their tweet.\n\nYou walk onstage to a roar that shakes the building.",choices:[{text:"⭐ The tour rolls on — next stop, Tokyo!",next:"tokyo_crisis",mood:"victorious"}]},
+  pr_ignore:{chapter:"Chapter 5",title:"Silence is Power",art:"🚫",text:"You say nothing. The story runs. Twitter is messy for 24 hours.\n\nBut then the London show happens — footage of you and the member harmonising, laughing, hugging mid-stage goes viral. The truth needs no words.\n\nThe journalist quietly apologises. Your fandom grows.",choices:[{text:"⭐ Dignity intact — next stop, Tokyo!",next:"tokyo_crisis",mood:"regal"}]},
+  pr_confront:{chapter:"Chapter 5",title:"Don't Poke the Bear",art:"😬",text:"You find the journalist. You are calm, polite, and devastating. \"Every single claim you have is false. I'd like to know your source.\"\n\nThey have no source. The story never runs. But your manager gives you a very long look. \"Never do that again,\" she says. \"But also... well done.\"",choices:[{text:"😅 Crisis averted — next stop, Tokyo!",next:"tokyo_crisis",mood:"chaotic good"}]},
+  tokyo_crisis:{chapter:"Chapter 6",title:"Tokyo, and the Fall",art:"🇯🇵",text:"Tokyo. Your home crowd. 50,000 fans. The pressure is immense.\n\nThen, during soundcheck, your voice comes out as a croak. Laryngitis. You've lost it completely.\n\nThe doctor says you can perform but must not sing a single note — just dance. The members look at you with worried eyes.",choices:[{text:"💃 Own it — be the best silent performer Tokyo has ever seen",next:"silent_star",mood:"iconic"},{text:"😢 Ask to be pulled from the show",next:"pulled_show",mood:"proud"},{text:"🤫 Mime along — the crowd will never know",next:"mime_caught",mood:"risky"}]},
+  silent_star:{chapter:"Chapter 6",title:"The Dancer Speaks",art:"💫",text:"You dance like your life depends on it. Every emotion poured into every movement. The Tokyo crowd sense something — they sing YOUR lines back to you.\n\n50,000 voices fill the silence you left. You cry onstage. They cry in the crowd.\n\nIt becomes the most talked-about TWICE moment of the year.",choices:[{text:"🌟 That moment will live forever — final chapter!",next:"finale",mood:"legendary"}]},
+  pulled_show:{chapter:"Chapter 6",title:"The Hard Call",art:"😢",text:"You watch from the wings. It's the hardest thing you've ever done. The members dedicate the show to you — Jihyo points to the wings mid-song.\n\nThe crowd chants your name for three minutes straight. You walk out to wave. The noise is deafening.\n\nSometimes the bravest thing is knowing your limits.",choices:[{text:"💜 Head held high — final chapter!",next:"finale",mood:"dignified"}]},
+  mime_caught:{chapter:"Chapter 6",title:"Oops",art:"😳",text:"You mime perfectly... for six songs. Then a technical glitch kills your in-ear monitor. You lose the lyrics for exactly 1.5 seconds. A fan in row 3 notices.\n\nTwitter is briefly chaotic. But every ONCE rushes to defend you. \"She has LARYNGITIS and still showed up for us??\"\n\nSomehow you come out of it more beloved than ever.",choices:[{text:"😅 Somehow survived — final chapter!",next:"finale",mood:"blessed"}]},
+  finale:{chapter:"Epilogue",title:"You Are TWICE",art:"🌸🎤✨",isEnding:true,text:"Years pass. Albums. World tours. Awards. Tears and laughter and late nights in practice rooms. Injuries and comebacks and standing ovations.\n\nOne evening, backstage at your tenth anniversary concert, Jihyo finds you staring at an old photo — two trainees glaring at each other in a corridor.\n\n\"Hard to believe,\" she says.\n\n\"Which part?\" you ask.\n\nShe grins. \"That I ever thought this stage wasn't big enough for both of us.\"\n\nThe crowd is chanting. It's time.\n\nYou are Myoui Mina. You are TWICE. And the music never stops."},
+};
+
+// ── state ──────────────────────────────────────────────────
+let sceneId="start", history=[];
+
+function render(){
+  const scene=SCENES[sceneId];
+  const cc=CC[scene.chapter]||C.pink;
+
+  // top/bottom bars
+  document.getElementById("top-bar").style.background=`linear-gradient(90deg,transparent,${cc},${C.pink},${cc},transparent)`;
+  document.getElementById("bottom-bar").style.background=`linear-gradient(90deg,transparent,${cc}66,transparent)`;
+
+  // illustration
+  document.getElementById("illustration").innerHTML=`<div id="ch-badge" style="position:absolute;top:10px;left:12px;font-size:10px;padding:3px 10px;border-radius:20px;background:#08000fcc;color:${cc};border:1px solid ${cc}55;letter-spacing:1px;text-transform:uppercase;font-family:sans-serif">${scene.chapter}</div>`+getIllustration(sceneId,cc);
+
+  // card border
+  document.getElementById("card").style.border=`1.5px solid ${cc}55`;
+  document.getElementById("card").style.boxShadow=`0 0 60px ${cc}18`;
+
+  // art + title
+  document.getElementById("art").textContent=scene.art;
+  document.getElementById("art").style.filter=`drop-shadow(0 0 8px ${cc})`;
+  document.getElementById("title").textContent=scene.title;
+
+  // story
+  const storyEl=document.getElementById("story-text");
+  storyEl.innerHTML=scene.text.split("\n\n").map((p,i)=>`<p style="margin:${i===0?"0 0 .7rem":"0.7rem 0 0"}">${p}</p>`).join("");
+
+  // scene count
+  const sc=document.getElementById("scene-count");
+  if(history.length>0){sc.style.display="inline";sc.textContent=`Scene ${history.length+1}`;}else sc.style.display="none";
+
+  // breadcrumb
+  const bc=document.getElementById("breadcrumb");
+  if(history.length>0){
+    bc.innerHTML=history.slice(-6).map(id=>{const s=SCENES[id],c2=CC[s?.chapter]||C.muted;return`<div class="bc-item" style="background:${c2}22;color:${c2};border:1px solid ${c2}33">${s?.title}</div>`;}).join("");
+  } else bc.innerHTML="";
+
+  // choices or ending
+  const choicesEl=document.getElementById("choices");
+  const endingEl=document.getElementById("ending");
+  const startOver=document.getElementById("start-over");
+
+  if(scene.isEnding){
+    choicesEl.style.display="none";
+    endingEl.style.display="block";
+    endingEl.innerHTML=`<div class="done-label">✨ YOUR JOURNEY IS COMPLETE ✨</div><div class="score-box"><div class="sl">Scenes visited</div><div class="sn">${history.length+1}</div></div><button class="restart-btn" onclick="restart()" style="background:linear-gradient(135deg,${C.pink2},${C.purple2});color:#fff;border:none;border-radius:24px;padding:11px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif">🔄 Play Again</button>`;
+    startOver.style.display="none";
+  } else {
+    endingEl.style.display="none";
+    choicesEl.style.display="flex";
+    choicesEl.innerHTML=scene.choices.map((c,i)=>{
+      const mc=MOOD[c.mood]||C.pink;
+      return`<button class="choice-btn" data-i="${i}" style="border:1.5px solid ${mc}44" onmouseenter="this.style.background='${mc}22';this.style.borderColor='${mc}';if(!muted)SFX.hover();" onmouseleave="this.style.background='#ffffff08';this.style.borderColor='${mc}44';">${c.text}</button>`;
+    }).join("");
+    choicesEl.querySelectorAll(".choice-btn").forEach((btn,i)=>{
+      btn.addEventListener("click",()=>choose(scene.choices[i]));
+    });
+    startOver.style.display=history.length>0?"block":"none";
+  }
+}
+
+function transition(fn){
+  const card=document.getElementById("card");
+  card.classList.remove("visible");card.classList.add("hidden");
+  setTimeout(()=>{fn();card.classList.remove("hidden");card.classList.add("visible");},460);
+}
+
+function choose(c){
+  play("click");
+  transition(()=>{history.push(sceneId);sceneId=c.next;render();setTimeout(()=>chapterSound(SCENES[c.next]?.chapter),100);});
+}
+
+function restart(){
+  transition(()=>{sceneId="start";history=[];render();setTimeout(()=>play("ambient"),100);});
+}
+
+// ── init ───────────────────────────────────────────────────
+render();
+setTimeout(()=>play("ambient"),700);
+</script>
+</body>
+</html>
